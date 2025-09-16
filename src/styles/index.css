@@ -54,11 +54,16 @@ li span {
 }
 
 li button {
-  color: white;
+  background: transparent;
   border: none;
-  border-radius: 6px;
-  padding: 6px 10px;
   cursor: pointer;
+  display: none;
+  color: red;
+  font: bold;
+}
+
+li:hover button {
+  display: inline-block;
 }
 
 .note {
