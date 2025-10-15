@@ -5,14 +5,15 @@ import ReactDOM from 'react-dom/client'
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap"
 
-// index.css'
+// index.css
 import '../styles/index.css'
 
 // components
-import Home from './components/Home';
+import User from './components/User';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Home/>
+    <User />
   </React.StrictMode>,
 )
+

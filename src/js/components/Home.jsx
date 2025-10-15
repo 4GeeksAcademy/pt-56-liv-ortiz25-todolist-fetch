@@ -1,31 +1,76 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-function Home() {
+function Home({ userInput }) {
   const [tasks, setTasks] = useState([]);
   const [newTask, setNewTask] = useState("");
 
-  const addTask = () => {
-    if (newTask.trim() === "") return; 
-    setTasks([...tasks, newTask]);
-    setNewTask("");
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      addTask();
+  const getTasks = async () => {
+    try {
+      const response = await fetch(`https://playground.4geeks.com/todo/users/${userInput}`);
+      const data = await response.json();
+      setTasks(data.todos || []);
+    } catch (error) {
+      console.error("Error loading tasks:", error);
     }
   };
 
-  const removeTask = (index) => {
-    const updatedTasks = [...tasks];
-    updatedTasks.splice(index, 1);
-    setTasks(updatedTasks);
+  const addTask = async () => {
+    if (newTask.trim() === "") return;
+
+    try {
+      const response = await fetch(`https://playground.4geeks.com/todo/todos/${userInput}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: newTask, is_done: false }),
+      });
+
+      if (response.ok) {
+        setNewTask("");
+        await getTasks(); 
+      }
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
   };
+
+  const removeTask = async (id) => {
+    try {
+      const response = await fetch(`https://playground.4geeks.com/todo/todos/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) await getTasks();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
+  };
+
+  const clearAllTasks = async () => {
+    if (tasks.length === 0) return;
+    try {
+      await Promise.all(
+        tasks.map((task) =>
+          fetch(`https://playground.4geeks.com/todo/todos/${task.id}`, { method: "DELETE" })
+        )
+      );
+      await getTasks();
+    } catch (error) {
+      console.error("Error deleting all tasks:", error);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") addTask();
+  };
+
+  useEffect(() => {
+    getTasks();
+  }, [userInput]);
 
   return (
     <div className="container">
       <div className="row">
-        <h1 className="title">To-Do List</h1>
+        <h1 className="title">Hello, {userInput}!</h1>
         <div className="input">
           <input
             type="text"
@@ -33,17 +78,21 @@ function Home() {
             placeholder="What needs to be done?"
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            onKeyDown={handleKeyDown} // 
+            onKeyDown={handleKeyDown}
           />
         </div>
+
         <ul>
-          {tasks.map((task, index) => (
-            <li key={index}>
-              <span>{task}</span>
-              <button onClick={() => removeTask(index)}>X</button>
+          {tasks.map((task) => (
+            <li key={task.id}>
+              <span>{task.label}</span>
+              <button className="delete-btn" onClick={() => removeTask(task.id)}>
+                X
+              </button>
             </li>
           ))}
         </ul>
+
         {tasks.length > 0 ? (
           <div className="note">
             {tasks.length} item{tasks.length > 1 ? "s" : ""} left
@@ -51,10 +100,15 @@ function Home() {
         ) : (
           <p className="empty">No tasks, add a task</p>
         )}
+
+        {tasks.length > 0 && (
+          <button className="clear-btn" onClick={clearAllTasks}>
+            Delete all
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
 export default Home;
-
